@@ -49,5 +49,22 @@ describe('stream', function() {
     stocks.on('end', done);
   });
 
-  it('allows pause');
+  it('allows pause', function(done) {
+    var stocks = new Stream({ endpoint: endpoint, frequency: 1 });
+    stocks.once('data', function() {
+      expect(app.requests.length).to.eql(1);
+    });
+    stocks.pause();
+    setTimeout(function() {
+      expect(app.requests.length).to.eql(1);
+      stocks.resume();
+    }, 20);
+    app.on('req', function() {
+      if (app.requests.length === 4) {
+        stocks.close();
+      }
+    });
+    stocks.on('error', done);
+    stocks.on('end', done);
+  });
 });

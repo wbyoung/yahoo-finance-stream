@@ -8,7 +8,7 @@ var JSONStream = require('JSONStream');
 var Readable = require('stream').Readable;
 
 function Stream(options) {
-  Readable.call(this, { objectMode : true });
+  Readable.call(this, { highWaterMark: 1, objectMode : true });
 
   this._request = null;
   this._options = _.defaults({}, options, {
@@ -28,8 +28,8 @@ Stream.prototype._run = function() {
 
   stream.on('data', function(data) {
     if (self._closed) { return; }
-    if (!self.push(data)) {
-      self._cancelTimer();
+    if (self.push(data)) {
+      self._setupTimer();
     }
   });
 
@@ -40,7 +40,6 @@ Stream.prototype._run = function() {
 
   stream.on('end', function() {
     self._request = null;
-    self._setupTimer();
   });
 };
 
