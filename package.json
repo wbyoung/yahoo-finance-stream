@@ -1,0 +1,30 @@
+{
+  "name": "yahoo-finance-stream",
+  "version": "0.1.0",
+  "description": "Yahoo Finance Stream",
+  "main": "index.js",
+  "scripts": {
+    "test": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha --report $(if [ \"$TRAVIS\" ]; then echo lcovonly; else echo html; fi) -- --recursive && if [ \"$TRAVIS\" ]; then cat ./coverage/lcov.info | ./node_modules/.bin/coveralls; fi"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/wbyoung/yahoo-finance-stream.git"
+  },
+  "keywords": [
+    "yahoo",
+    "finance",
+    "stream"
+  ],
+  "author": "Whitney Young",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wbyoung/yahoo-finance-stream/issues"
+  },
+  "homepage": "https://github.com/wbyoung/yahoo-finance-stream",
+  "devDependencies": {
+    "chai": "^2.2.0",
+    "coveralls": "^2.11.2",
+    "istanbul": "^0.3.13",
+    "mocha": "^2.2.4"
+  }
+}
