@@ -4,6 +4,8 @@ var chai = require('chai');
 var expect = chai.expect;
 var util = require('util');
 var Stream = require('..').Stream;
+var sinon = require('sinon');
+chai.use(require('sinon-chai'));
 
 // fake endpoint app
 var app = require('./fakes/endpoint'), server;
@@ -38,18 +40,20 @@ describe('stream', function() {
     stocks.on('end', done);
   });
 
-  it('does not send data after close', function(done) {
+  it('emits pending data after close', function(done) {
     var stocks = new Stream({ endpoint: endpoint, frequency: 1 });
+    var spy = sinon.spy();
     stocks.resume();
     stocks.close();
-    stocks.on('data', function() {
-      done(new Error('Data sent after close of stream.'));
-    });
+    stocks.on('data', spy);
     stocks.on('error', done);
-    stocks.on('end', done);
+    stocks.on('end', function() {
+      expect(spy).to.have.been.called;
+      done();
+    });
   });
 
-  it('allows pause', function(done) {
+  it('allows pause & resume', function(done) {
     var stocks = new Stream({ endpoint: endpoint, frequency: 1 });
     stocks.once('data', function() {
       expect(app.requests.length).to.eql(1);

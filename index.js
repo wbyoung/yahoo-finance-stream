@@ -27,7 +27,6 @@ Stream.prototype._run = function() {
   }).pipe(JSONStream.parse());
 
   stream.on('data', function(data) {
-    if (self._closed) { return; }
     if (self.push(data)) {
       self._setupTimer();
     }
@@ -44,9 +43,7 @@ Stream.prototype._run = function() {
 };
 
 Stream.prototype._setupTimer = function() {
-  if (!this._closed) {
-    this._timer = setTimeout(this._run.bind(this), this._options.frequency);
-  }
+  this._timer = setTimeout(this._run.bind(this), this._options.frequency);
 };
 
 Stream.prototype._cancelTimer = function() {
@@ -60,10 +57,12 @@ Stream.prototype._read = function(size) {
 };
 
 Stream.prototype.close = function() {
-  this._closed = true;
-  this._cancelTimer();
+  var self = this;
+  var close = function() {
+    self.push(null);
+    self._cancelTimer();
+  };
 
-  var close = this.push.bind(this, null);
   if (this._request) { this._request.on('end', close); }
   else { close(); }
 };
