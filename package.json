@@ -24,7 +24,14 @@
   "devDependencies": {
     "chai": "^2.2.0",
     "coveralls": "^2.11.2",
+    "express": "^4.12.3",
     "istanbul": "^0.3.13",
     "mocha": "^2.2.4"
+  },
+  "dependencies": {
+    "JSONStream": "^0.10.0",
+    "lodash": "^3.7.0",
+    "request": "^2.55.0",
+    "through": "^2.3.7"
   }
 }
