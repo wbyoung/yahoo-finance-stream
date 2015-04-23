@@ -10,6 +10,7 @@ var Readable = require('stream').Readable;
 function Stream(options) {
   Readable.call(this, { objectMode : true });
 
+  this._request = null;
   this._options = _.defaults({}, options, {
     frequency: 60000,
     endpoint: 'https://query.yahooapis.com/v1/public/yql',
@@ -36,14 +37,12 @@ Stream.prototype._stop = function() {
 Stream.prototype._requestQuote = function() {
   var self = this;
   var endpoint = this._options.endpoint;
-  var stream = request({
+  var stream = self._request = request({
     url: endpoint
   }).pipe(JSONStream.parse());
 
-  self._waiting = true;
-
   stream.on('data', function(data) {
-    if (self._closing) { return; }
+    if (self._closed) { return; }
     if (!self.push(data)) {
       self._cancelTimer();
     }
@@ -55,9 +54,7 @@ Stream.prototype._requestQuote = function() {
   });
 
   stream.on('end', function() {
-    self._waiting = false;
-
-    if (self._closing) { return self._close(); }
+    self._request = null;
   });
 };
 
@@ -73,16 +70,13 @@ Stream.prototype._read = function(size) {
   this._start();
 };
 
-Stream.prototype._close = function() {
-  if (!this._waiting) {
-    this.push(null);
-  }
-}
-
 Stream.prototype.close = function() {
-  this._closing = true;
+  this._closed = true;
   this._cancelTimer();
-  this._close();
+
+  var close = this.push.bind(this, null);
+  if (this._request) { this._request.on('end', close); }
+  else { close(); }
 };
 
 module.exports = new Stream();
