@@ -23,7 +23,6 @@ Stream.prototype._start = function() {
   if (!this._running) {
     this._running = true;
     this._requestQuote();
-    this._scheduleTimer();
   }
 };
 
@@ -55,11 +54,14 @@ Stream.prototype._requestQuote = function() {
 
   stream.on('end', function() {
     self._request = null;
+    self._scheduleTimer();
   });
 };
 
 Stream.prototype._scheduleTimer = function() {
-  this._timer = setTimeout(this._requestQuote.bind(this), this._options.frequency);
+  if (!this._closed) {
+    this._timer = setTimeout(this._requestQuote.bind(this), this._options.frequency);
+  }
 };
 
 Stream.prototype._cancelTimer = function() {

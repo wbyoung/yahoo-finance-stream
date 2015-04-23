@@ -30,7 +30,7 @@ describe('stream', function() {
   it('accepts a frequency setting', function(done) {
     var stocks = new Stream({ endpoint: endpoint, frequency: 1 });
     stocks.on('data', function() {
-      if (app.requests.length == 2) {
+      if (app.requests.length == 4) {
         stocks.close();
       }
     });
