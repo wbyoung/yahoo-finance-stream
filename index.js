@@ -19,24 +19,10 @@ function Stream(options) {
 
 util.inherits(Stream, Readable);
 
-Stream.prototype._start = function() {
-  if (!this._running) {
-    this._running = true;
-    this._requestQuote();
-  }
-};
-
-Stream.prototype._stop = function() {
-  if (!this._running) {
-    this._running = false;
-    this._cancelTimer();
-  }
-};
-
-Stream.prototype._requestQuote = function() {
+Stream.prototype._run = function() {
   var self = this;
   var endpoint = this._options.endpoint;
-  var stream = self._request = request({
+  var stream = this._request = request({
     url: endpoint
   }).pipe(JSONStream.parse());
 
@@ -54,13 +40,13 @@ Stream.prototype._requestQuote = function() {
 
   stream.on('end', function() {
     self._request = null;
-    self._scheduleTimer();
+    self._setupTimer();
   });
 };
 
-Stream.prototype._scheduleTimer = function() {
+Stream.prototype._setupTimer = function() {
   if (!this._closed) {
-    this._timer = setTimeout(this._requestQuote.bind(this), this._options.frequency);
+    this._timer = setTimeout(this._run.bind(this), this._options.frequency);
   }
 };
 
@@ -69,7 +55,9 @@ Stream.prototype._cancelTimer = function() {
 };
 
 Stream.prototype._read = function(size) {
-  this._start();
+  if (!this._request) {
+    this._run();
+  }
 };
 
 Stream.prototype.close = function() {
