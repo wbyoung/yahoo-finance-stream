@@ -72,6 +72,17 @@ describe('stream', function() {
     stocks.on('end', done);
   });
 
+  it('can be closed immediately', function(done) {
+    var stocks = new Stream({ endpoint: endpoint, frequency: 1 });
+    stocks.close();
+    stocks.resume(); // must be flowing
+    stocks.on('error', done);
+    stocks.on('end', function() {
+      expect(app.requests.length).to.eql(0);
+      done();
+    });
+  });
+
   it('emits errors for connection problems', function(done) {
     var stocks = new Stream({ endpoint: 'http://localhost:39232' });
     stocks.resume();
