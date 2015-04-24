@@ -6,7 +6,7 @@ var EventEmitter = require('events').EventEmitter;
 app.get('/', function(req, res) {
   app.requests.push(req);
   app.emit('req', req);
-  res.send({ stocks: [] });
+  res.send(require('./vti'));
 });
 
 app.reset = function() {

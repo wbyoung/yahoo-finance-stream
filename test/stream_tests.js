@@ -94,4 +94,30 @@ describe('stream', function() {
       done(new Error('Expected error to occur.'));
     });
   });
+
+  it('emits data for a single stock', function(done) {
+    var stocks = new Stream({ endpoint: endpoint });
+    stocks.watch('vti');
+    stocks.on('data', function(data) {
+      expect(data.symbol).to.eql('VTI');
+      stocks.close();
+    });
+    stocks.on('error', done);
+    stocks.on('end', done);
+  });
+
+  it('builds url for a single stock', function() {
+    var stocks = new Stream({ endpoint: endpoint });
+    var query = 'select%20*%20' +
+      'from%20yahoo.finance.quotes%20' +
+      'where%20symbol%20in%20(%22VTI%22)';
+    var env = 'store%3A%2F%2Fdatatables.org%2Falltableswithkeys';
+    var url = endpoint +
+      '?q=' + query +
+      '&format=json' +
+      '&env=' + env +
+      '&callback=';
+    stocks.watch('vti');
+    expect(stocks._url()).to.eql(url);
+  });
 });

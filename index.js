@@ -2,6 +2,7 @@
 
 var _ = require('lodash');
 var util = require('util');
+var qs = require('querystring');
 var request = require('request');
 var through = require('through');
 var JSONStream = require('JSONStream');
@@ -11,6 +12,7 @@ function Stream(options) {
   Readable.call(this, { highWaterMark: 1, objectMode : true });
 
   this._request = null;
+  this._symbols = [];
   this._options = _.defaults({}, options, {
     frequency: 60000,
     endpoint: 'https://query.yahooapis.com/v1/public/yql',
@@ -19,19 +21,44 @@ function Stream(options) {
 
 util.inherits(Stream, Readable);
 
+Stream.prototype.watch = function(symbol) {
+  this._symbols.push(symbol.toUpperCase());
+};
+
+Stream.prototype._url = function() {
+  var symbols = this._symbols.map(function(s) {
+    return JSON.stringify(s);
+  });
+  var yql = util.format(
+    'select * from yahoo.finance.quotes ' +
+    'where symbol in (%s)', symbols);
+  var query = qs.stringify({
+    q: yql,
+    format: 'json',
+    env: 'store://datatables.org/alltableswithkeys',
+    callback: '',
+  });
+  return util.format('%s?%s', this._options.endpoint, query);
+};
+
 Stream.prototype._run = function() {
   var self = this;
   var emitError = this._error.bind(this);
   var endpoint = this._options.endpoint;
   var stream = this._request = request({
-    url: endpoint
+    url: this._url(),
   })
   .on('error', emitError)
   .pipe(JSONStream.parse())
   .on('error', emitError);
 
   stream.on('data', function(data) {
-    if (self.push(data)) {
+    var success = true;
+    var quotes = _.flatten([data.query.results.quote]);
+    quotes.forEach(function(quote) {
+      if (!self.push(quote)) { success = false; }
+    });
+    if (success) {
       self._setupTimer();
     }
   });
