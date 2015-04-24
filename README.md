@@ -2,6 +2,17 @@
 
 [![NPM version][npm-image]][npm-url] [![Build status][travis-image]][travis-url] [![Code Climate][codeclimate-image]][codeclimate-url] [![Coverage Status][coverage-image]][coverage-url] [![Dependencies][david-image]][david-url] [![devDependencies][david-dev-image]][david-dev-url]
 
+```js
+var stocks = require('yahoo-finance-stream')({ frequency: 5000 });
+
+stocks.watch('aapl');
+stocks.watch('ibm');
+
+stocks.on('data', function(stock) {
+  console.log('%s: %d', stock.symbol, stock.bid);
+});
+```
+
 ## License
 
 This project is distributed under the MIT license.
