@@ -4,7 +4,7 @@ var _ = require('lodash');
 var chai = require('chai');
 var expect = chai.expect;
 var util = require('util');
-var Stream = require('..').Stream;
+var Stream = require('..');
 var sinon = require('sinon');
 chai.use(require('sinon-chai'));
 

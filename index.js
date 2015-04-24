@@ -146,5 +146,4 @@ Stream.prototype.close = function() {
   else { close(); }
 };
 
-module.exports = new Stream();
-module.exports.Stream = Stream;
+module.exports = Stream;
