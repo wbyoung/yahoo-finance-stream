@@ -41,6 +41,16 @@ Stream.prototype._url = function() {
   return util.format('%s?%s', this._options.endpoint, query);
 };
 
+Stream.prototype._standardize = function(quote) {
+  var standardized = { _quote: quote };
+  return _.reduce(quote, function(obj, value, key) {
+    if (/^[+-]?[\d\.]+$/.test(value)) { value = parseFloat(value); }
+    else if (/^[+-]?[\d\.]+%$/.test(value)) { value = parseFloat(value) / 100.0; }
+    obj[_.camelCase(key)] = value;
+    return obj;
+  }, standardized);
+};
+
 Stream.prototype._run = function() {
   var self = this;
   var emitError = this._error.bind(this);
@@ -56,7 +66,7 @@ Stream.prototype._run = function() {
     var success = true;
     var quotes = _.flatten([data.query.results.quote]);
     quotes.forEach(function(quote) {
-      if (!self.push(quote)) { success = false; }
+      if (!self.push(self._standardize(quote))) { success = false; }
     });
     if (success) {
       self._setupTimer();

@@ -95,17 +95,6 @@ describe('stream', function() {
     });
   });
 
-  it('emits data for a single stock', function(done) {
-    var stocks = new Stream({ endpoint: endpoint });
-    stocks.watch('vti');
-    stocks.on('data', function(data) {
-      expect(data.symbol).to.eql('VTI');
-      stocks.close();
-    });
-    stocks.on('error', done);
-    stocks.on('end', done);
-  });
-
   it('builds url for a single stock', function() {
     var stocks = new Stream({ endpoint: endpoint });
     var query = 'select%20*%20' +
@@ -120,4 +109,32 @@ describe('stream', function() {
     stocks.watch('vti');
     expect(stocks._url()).to.eql(url);
   });
+
+  describe('when getting a single stock', function() {
+    before(function(done) {
+      var stocks = new Stream({ endpoint: endpoint });
+      stocks.watch('vti');
+      stocks.on('data', function(data) {
+        this.data = data;
+        stocks.close();
+      }.bind(this));
+      stocks.on('error', done);
+      stocks.on('end', done);
+
+    });
+
+    it('has the proper symbol', function() {
+      expect(this.data.symbol).to.eql('VTI');
+    });
+
+    it('standardizes the quote object', function() {
+      expect(this.data.yearHigh).to.eql(110.09);
+      expect(this.data.percentChange).to.be.closeTo(0.0007, 0.000001);
+    });
+
+    it('stores original quote object', function() {
+      expect(this.data._quote['YearHigh']).to.eql('110.09');
+    });
+  });
+
 });
