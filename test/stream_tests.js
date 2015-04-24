@@ -20,6 +20,10 @@ describe('stream', function() {
 
   beforeEach(function() { app.reset(); });
 
+  it('can be created without new', function() {
+    expect(Stream({ endpoint: endpoint })).to.be.an.instanceof(Stream);
+  });
+
   it('connects to api endpoint', function(done) {
     var stocks = new Stream({ endpoint: endpoint });
     stocks.watch('vti');
