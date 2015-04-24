@@ -21,20 +21,19 @@ util.inherits(Stream, Readable);
 
 Stream.prototype._run = function() {
   var self = this;
+  var emitError = this._error.bind(this);
   var endpoint = this._options.endpoint;
   var stream = this._request = request({
     url: endpoint
-  }).pipe(JSONStream.parse());
+  })
+  .on('error', emitError)
+  .pipe(JSONStream.parse())
+  .on('error', emitError);
 
   stream.on('data', function(data) {
     if (self.push(data)) {
       self._setupTimer();
     }
-  });
-
-  stream.on('error', function(e) {
-    self.emit('error', e);
-    self.close();
   });
 
   stream.on('end', function() {
@@ -48,6 +47,11 @@ Stream.prototype._setupTimer = function() {
 
 Stream.prototype._cancelTimer = function() {
   clearTimeout(this._timer);
+};
+
+Stream.prototype._error = function(e) {
+  this.emit('error', e);
+  this.close();
 };
 
 Stream.prototype._read = function(size) {

@@ -71,4 +71,16 @@ describe('stream', function() {
     stocks.on('error', done);
     stocks.on('end', done);
   });
+
+  it('emits errors for connection problems', function(done) {
+    var stocks = new Stream({ endpoint: 'http://localhost:39232' });
+    stocks.resume();
+    stocks.on('error', function(e) {
+      expect(e).to.exist;
+      done();
+    });
+    stocks.on('end', function() {
+      done(new Error('Expected error to occur.'));
+    });
+  });
 });
