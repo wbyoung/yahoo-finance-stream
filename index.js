@@ -4,7 +4,6 @@ var _ = require('lodash');
 var util = require('util');
 var qs = require('querystring');
 var request = require('request');
-var through = require('through');
 var JSONStream = require('JSONStream');
 var Readable = require('stream').Readable;
 
@@ -21,7 +20,7 @@ function Stream(options) {
     frequency: 60000,
     endpoint: 'https://query.yahooapis.com/v1/public/yql',
   });
-};
+}
 
 util.inherits(Stream, Readable);
 
@@ -68,7 +67,6 @@ Stream.prototype._run = function() {
 
   var self = this;
   var emitError = this._error.bind(this);
-  var endpoint = this._options.endpoint;
   var stream = this._request = request({
     url: this._url(),
   })
@@ -126,7 +124,7 @@ Stream.prototype._error = function(e) {
   this.close();
 };
 
-Stream.prototype._read = function(size) {
+Stream.prototype._read = function(/*size*/) {
   // mark this as running & schedule a timer to actually run. if this wasn't
   // already running, then we schedule the run for immediate execution.
   var wasRunning = this._running;
