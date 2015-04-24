@@ -33,7 +33,6 @@
   "dependencies": {
     "JSONStream": "^0.10.0",
     "lodash": "^3.7.0",
-    "request": "^2.55.0",
-    "through": "^2.3.7"
+    "request": "^2.55.0"
   }
 }
