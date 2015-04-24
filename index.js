@@ -9,6 +9,10 @@ var JSONStream = require('JSONStream');
 var Readable = require('stream').Readable;
 
 function Stream(options) {
+  if (!(this instanceof Stream)) {
+    return new Stream(options);
+  }
+
   Readable.call(this, { highWaterMark: 1, objectMode : true });
 
   this._request = null;
