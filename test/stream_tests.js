@@ -31,6 +31,33 @@ describe('stream', function() {
     stocks.on('end', done);
   });
 
+  it('does not connect to api endpoint if not watching any stocks', function(done) {
+    var stocks = new Stream({ endpoint: endpoint });
+    stocks.on('data', function() {
+      done(new Error('No data should have been retrieved'));
+    });
+    setTimeout(function() {
+      expect(app.requests.length).to.eql(0);
+      stocks.close();
+    }, 10);
+    stocks.on('error', done);
+    stocks.on('end', done);
+  });
+
+  it('connects to api endpoint only once stock is added', function(done) {
+    var stocks = new Stream({ endpoint: endpoint });
+    stocks.on('data', function() {
+      expect(app.requests.length).to.eql(1);
+      stocks.close();
+    });
+    setTimeout(function() {
+      expect(app.requests.length).to.eql(0);
+      stocks.watch('vti');
+    }, 10);
+    stocks.on('error', done);
+    stocks.on('end', done);
+  });
+
   it('accepts a frequency setting', function(done) {
     var stocks = new Stream({ endpoint: endpoint, frequency: 1 });
     stocks.watch('vti');
@@ -48,7 +75,10 @@ describe('stream', function() {
     var spy = sinon.spy();
     stocks.watch('vti');
     stocks.resume();
-    stocks.close();
+    setTimeout(function() {
+      stocks.close();
+      expect(spy).to.not.have.been.called;
+    }, 0);
     stocks.on('data', spy);
     stocks.on('error', done);
     stocks.on('end', function() {
@@ -79,6 +109,18 @@ describe('stream', function() {
 
   it('can be closed immediately', function(done) {
     var stocks = new Stream({ endpoint: endpoint, frequency: 1 });
+    stocks.close();
+    stocks.resume(); // must be flowing
+    stocks.on('error', done);
+    stocks.on('end', function() {
+      expect(app.requests.length).to.eql(0);
+      done();
+    });
+  });
+
+  it('can be closed immediately after watching a stock', function(done) {
+    var stocks = new Stream({ endpoint: endpoint, frequency: 1 });
+    stocks.watch('vti');
     stocks.close();
     stocks.resume(); // must be flowing
     stocks.on('error', done);
@@ -190,5 +232,50 @@ describe('stream', function() {
       expect(_.map(this.quotes.slice(2, 4), 'symbol'))
         .to.eql(['VTI', 'VXUS']);
     });
+  });
+
+
+  it('does not make more requests than required', function(done) {
+    var stocks = new Stream({ endpoint: endpoint });
+    stocks.watch('vti');
+    stocks.on('data', function() {
+      expect(app.requests.length).to.eql(1);
+    });
+    setTimeout(stocks.close.bind(stocks), 10);
+    stocks.on('error', done);
+    stocks.on('end', done);
+  });
+
+  it('queues an immediate request for newly added symbols', function(done) {
+    // we add VTI, and a quote will be scheduled to come in immediately.
+    var stocks = new Stream({ endpoint: endpoint });
+    stocks.watch('vti');
+
+    // we add VXUS, but not right away. instead, we add it midway through the
+    // handling of the request for VTI.
+    app.on('req', function() {
+      if (app.requests.length === 1) {
+        stocks.watch('vxus');
+      }
+    });
+
+    // we expect that even though the polling frequency is at 60 seconds,
+    // that the late addition of the VXUS will queue up another request right
+    // after the initial request completes.
+    stocks.on('data', function() {
+      if (app.requests.length === 2) {
+        // once all requests we expect are in, we delay just a bit on closing
+        // the stream to ensure that we're back to the same 60 second polling
+        // schedule and no more requests come in.
+        setTimeout(stocks.close.bind(stocks), 10);
+      }
+    });
+
+    stocks.on('error', done);
+    stocks.on('end', function() {
+      expect(app.requests.length).to.eql(2);
+      done();
+    });
+
   });
 });

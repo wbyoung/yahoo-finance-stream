@@ -27,6 +27,7 @@ util.inherits(Stream, Readable);
 
 Stream.prototype.watch = function(symbol) {
   this._symbols.push(symbol.toUpperCase());
+  this._schedule({ immediate: true });
 };
 
 Stream.prototype._url = function() {
@@ -55,7 +56,14 @@ Stream.prototype._standardize = function(quote) {
   }, standardized);
 };
 
+Stream.prototype._canRun = function() {
+  return this._request === null && // only allow one request
+    this._symbols.length !== 0; // only run when symbols are present
+};
+
 Stream.prototype._run = function() {
+  if (!this._canRun()) { return; }
+
   var self = this;
   var emitError = this._error.bind(this);
   var endpoint = this._options.endpoint;
@@ -67,27 +75,48 @@ Stream.prototype._run = function() {
   .on('error', emitError);
 
   stream.on('data', function(data) {
-    var success = true;
-    var quotes = _.flatten([data.query.results.quote]);
-    quotes.forEach(function(quote) {
-      if (!self.push(self._standardize(quote))) { success = false; }
+    _.flatten([data.query.results.quote]).forEach(function(quote) {
+      if (!self.push(self._standardize(quote))) {
+        self._running = false;
+      }
     });
-    if (success) {
-      self._setupTimer();
-    }
   });
 
   stream.on('end', function() {
     self._request = null;
+    self._schedule();
   });
 };
 
-Stream.prototype._setupTimer = function() {
-  this._timer = setTimeout(this._run.bind(this), this._options.frequency);
-};
 
-Stream.prototype._cancelTimer = function() {
+Stream.prototype._schedule = function(options) {
+  var opts = _.defaults({}, options);
+
+  // if immediate flag is given or was previously given, we ensure that it
+  // sticks until the next successful run occurs. we do this by storing an
+  // instance variable to track it across scheduling requests. either the
+  // option flag or the instance variable being set indicates that both should
+  // be set.
+  if (this._immediate || opts.immediate) {
+    this._immediate = opts.immediate = true;
+  }
+
+  // remove any existing timer
   clearTimeout(this._timer);
+
+  var self = this;
+  var timeout = opts.immediate ? 0 : this._options.frequency;
+  var run = function() {
+    if (self._canRun()) {
+      self._run();
+      self._immediate = false; // run started, clear immediate flag
+    }
+  };
+
+  // schedule the timer only if we're actually running
+  if (this._running) {
+    this._timer = setTimeout(run, timeout);
+  }
 };
 
 Stream.prototype._error = function(e) {
@@ -96,16 +125,19 @@ Stream.prototype._error = function(e) {
 };
 
 Stream.prototype._read = function(size) {
-  if (!this._request) {
-    this._run();
-  }
+  // mark this as running & schedule a timer to actually run. if this wasn't
+  // already running, then we schedule the run for immediate execution.
+  var wasRunning = this._running;
+  this._running = true;
+  this._schedule({ immediate: !wasRunning });
 };
 
 Stream.prototype.close = function() {
   var self = this;
   var close = function() {
+    self._running = false;
+    self._schedule();
     self.push(null);
-    self._cancelTimer();
   };
 
   if (this._request) { this._request.on('end', close); }
