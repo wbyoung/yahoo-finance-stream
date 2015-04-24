@@ -1,6 +1,6 @@
 {
   "name": "yahoo-finance-stream",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "Yahoo Finance Stream",
   "main": "index.js",
   "scripts": {
