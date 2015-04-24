@@ -62,7 +62,9 @@ Stream.prototype._canRun = function() {
 };
 
 Stream.prototype._run = function() {
-  if (!this._canRun()) { return; }
+  if (!this._canRun()) {
+    throw new Error('Cannot run when _canRun returns false.');
+  }
 
   var self = this;
   var emitError = this._error.bind(this);

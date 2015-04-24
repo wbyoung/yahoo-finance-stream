@@ -280,6 +280,10 @@ describe('stream', function() {
       expect(app.requests.length).to.eql(2);
       done();
     });
+  });
 
+  it('throws an error when run in an invalid state', function() {
+    var stocks = new Stream({ endpoint: endpoint });
+    expect(stocks._run.bind(stocks)).to.throw(/cannot run/i);
   });
 });
