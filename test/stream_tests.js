@@ -79,10 +79,10 @@ describe('stream', function() {
     var spy = sinon.spy();
     stocks.watch('vti');
     stocks.resume();
-    setTimeout(function() {
+    app.on('req', function() {
       stocks.close();
       expect(spy).to.not.have.been.called;
-    }, 10);
+    });
     stocks.on('data', spy);
     stocks.on('error', done);
     stocks.on('end', function() {

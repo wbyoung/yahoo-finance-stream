@@ -24,6 +24,7 @@ app.get('/', function(req, res) {
 
 app.reset = function() {
   app.requests = [];
+  app.removeAllListeners('req');
 };
 
 util.inherits(app, EventEmitter);
