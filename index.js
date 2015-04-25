@@ -67,19 +67,20 @@ Stream.prototype._run = function() {
 
   var self = this;
   var emitError = this._error.bind(this);
+  var jsonPath = this._symbols.length === 1 ?
+    'query.results.quote' :
+    'query.results.quote.*';
   var stream = this._request = request({
     url: this._url(),
   })
   .on('error', emitError)
-  .pipe(JSONStream.parse())
+  .pipe(JSONStream.parse(jsonPath))
   .on('error', emitError);
 
-  stream.on('data', function(data) {
-    _.flatten([data.query.results.quote]).forEach(function(quote) {
-      if (!self.push(self._standardize(quote))) {
-        self._running = false;
-      }
-    });
+  stream.on('data', function(quote) {
+    if (!self.push(self._standardize(quote))) {
+      self._running = false;
+    }
   });
 
   stream.on('end', function() {
