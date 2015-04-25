@@ -82,7 +82,7 @@ describe('stream', function() {
     setTimeout(function() {
       stocks.close();
       expect(spy).to.not.have.been.called;
-    }, 0);
+    }, 1);
     stocks.on('data', spy);
     stocks.on('error', done);
     stocks.on('end', function() {
